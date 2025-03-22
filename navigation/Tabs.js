@@ -11,7 +11,7 @@ const Tabs = () =>{
     return(
         <Tab.Navigator
             // tabBarOptions={{
-            //     // showLable:false,
+            //     // showLable:true,
             //     // style:{
             //     //     position:'absolute',
             //     //     bottom:25,
