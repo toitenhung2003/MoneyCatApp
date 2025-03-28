@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: "#222",
   },
-  transactionCategory: { color: "#4CAF50", fontWeight: "bold", width:'20%' },
+  transactionCategory: { color: "#EE8E20", fontWeight: "bold", width:'20%' },
   transactionDesc: { color: "#000", flex: 1, paddingLeft: 10 },
   transactionAmount: { color: "#FF4500", fontWeight: "bold" },
   noTransaction: {

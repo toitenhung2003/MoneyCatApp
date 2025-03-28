@@ -1,6 +1,7 @@
 import { StatusBar, StyleSheet, Text, View } from 'react-native';
 import Tabs from './navigation/Tabs';
 import { NavigationContainer } from '@react-navigation/native';
+import ManHinhChao from './screens.js/ManHinhChao';
 export default function App() {
   return (
     <NavigationContainer >
@@ -10,6 +11,7 @@ export default function App() {
       
       ></StatusBar>
       <Tabs/>
+      {/* <ManHinhChao/> */}
     </NavigationContainer>
   );
 }
