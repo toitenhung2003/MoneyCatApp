@@ -7,6 +7,7 @@ import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 const ThuScreen = () => {
   const [categories, setCategories] = useState([
     'Tiền lương', 'Tiền thường', 'Tiền dự án',
+    
     'Khác...'
   ]);
       const [amount, setAmount] = useState("0");
@@ -17,6 +18,9 @@ const ThuScreen = () => {
       const [selectedCategory, setSelectedCategory] = useState(null);
       const [isDialogVisible, setIsDialogVisible] = useState(false);
       const [newCategory, setNewCategory] = useState('');
+      const [editedCategory, setEditedCategory] = useState('');
+      const [isAddDialogVisible, setIsAddDialogVisible] = useState(false);
+
       // Xử lý thêm danh mục mới
       const handleAddCategory = () => {
         if (newCategory.trim() !== '') {
@@ -24,6 +28,19 @@ const ThuScreen = () => {
           setSelectedCategory(newCategory);
         }
         setNewCategory('');
+        setIsAddDialogVisible(false);
+      };
+      const handleLongPress = (category) => {
+        setSelectedCategory(category);
+        setEditedCategory(category);
+        setIsDialogVisible(true);
+      };
+      const handleEditCategory = () => {
+        setCategories(categories.map(cat => cat === selectedCategory ? editedCategory : cat));
+        setIsDialogVisible(false);
+      };
+      const handleDeleteCategory = () => {
+        setCategories(categories.filter(cat => cat !== selectedCategory));
         setIsDialogVisible(false);
       };
       const handleDateChange = (event, selectedDate) => {
@@ -135,9 +152,10 @@ const ThuScreen = () => {
             <TouchableOpacity
               key={index}
               style={[styles.categoryButton, category === selectedCategory ? styles.selectedCategory : {}]}
+              onLongPress={() => handleLongPress(category)}
               onPress={() => {
                 if (category === 'Khác...') {
-                  setIsDialogVisible(true);
+                  setIsAddDialogVisible(true);
                 } else {
                   setSelectedCategory(prev => (prev === category ? null : category));
                 }
@@ -147,12 +165,30 @@ const ThuScreen = () => {
             </TouchableOpacity>
           ))}
         </ScrollView>
+        <Portal>
+          <Dialog visible={isDialogVisible} onDismiss={() => setIsDialogVisible(false)}>
+            <Dialog.Title>Chỉnh sửa danh mục</Dialog.Title>
+            <Dialog.Content>
+              <TextInput
+                style={styles.input}
+                value={editedCategory}
+                onChangeText={setEditedCategory}
+              />
+            </Dialog.Content>
+            <Dialog.Actions>
+              <Button onPress={() => setIsDialogVisible(false)}>Hủy</Button>
+              <Button onPress={handleEditCategory}>Lưu</Button>
+              <Button onPress={handleDeleteCategory} buttonColor="#f111">Xóa</Button>
+              
+            </Dialog.Actions>
+          </Dialog>
+        </Portal>
 
         <TouchableOpacity style={styles.submitButton}>
           <Text style={styles.submitText}>NHẬP KHOẢN THU</Text>
         </TouchableOpacity>
         <Portal>
-          <Dialog visible={isDialogVisible} onDismiss={() => setIsDialogVisible(false)}>
+          <Dialog style={{backgroundColor:'white'}} visible={isAddDialogVisible} onDismiss={() => isAddDialogVisible(false)}>
             <Dialog.Title>Thêm danh mục</Dialog.Title>
             <Dialog.Content>
               <TextInput
@@ -180,6 +216,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "#ffffff",
         padding: 20,
+        minHeight:'100%'
       },
       label: {
         fontSize: 16,
@@ -196,6 +233,9 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         flexWrap: "wrap",
         justifyContent: "flex-start",
+        backgroundColor:'#f1f2f6',
+        flexGrow:1,
+
       },
       categoryButton: {
         backgroundColor: 'white',
@@ -205,19 +245,19 @@ const styles = StyleSheet.create({
         minWidth: '30%',
         margin: 5,
         borderWidth:1,
-        borderColor:'#A0A0A0',
+        borderColor:'black',
         
       },
       selectedCategory: {
         borderWidth:2.5,
-        borderColor:'black'
+        borderColor:'#EE8E20'
       },
       categoryText: {
         color: "black",
         fontSize: 14,
       },
       submitButton: {
-        backgroundColor: "#2E2E2E",
+        backgroundColor: "#EE8E20",
         padding: 15,
         borderRadius: 10,
         alignItems: "center",

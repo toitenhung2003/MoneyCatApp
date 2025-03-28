@@ -28,7 +28,7 @@ const Setting = () => {
       <View style={[styles.container, darkMode && styles.darkContainer]}>
         <Text style={[styles.header, darkMode && styles.darkText]}>Cài đặt</Text>
         <View style={styles.profileContainer}>
-          <Image source={{ uri: "https://via.placeholder.com/60" }} style={styles.avatar} />
+          <Image source={require('../assets/logo_app.png')} style={styles.avatar} />
           <View>
             <Text style={[styles.profileName, darkMode && styles.darkText]}>Admin</Text>
             <Text style={[styles.profileEmail, darkMode && styles.darkText]}>admin@gmail.com</Text>
@@ -127,6 +127,8 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     marginRight: 15,
     backgroundColor: "orange",
+    borderColor:'gray',
+    borderWidth:1
   },
   profileName: {
     fontSize: 18,

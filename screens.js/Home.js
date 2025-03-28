@@ -55,13 +55,13 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   tabButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 22,
     borderRadius: 10,
     backgroundColor: "#D8D2DC", // Màu xám nhạt
   },
   activeTab: {
-    backgroundColor: "#413C40", // Màu xám đậm
+    backgroundColor: "#EE8E20", 
   },
   tabText: {
     fontSize: 14,

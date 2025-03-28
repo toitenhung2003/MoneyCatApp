@@ -83,7 +83,7 @@ const Search = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => setViewType("month")}>
+        <TouchableOpacity style={{}} onPress={() => setViewType("month")}>
           <Text style={[styles.tab, viewType === "month" && styles.activeTab]}>Hàng Tháng</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => setViewType("year")}>
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: "#fff" },
   header: { flexDirection: "row", justifyContent: "space-around", marginBottom: 20 },
   tab: { fontSize: 18, paddingVertical: 8, paddingHorizontal: 16, color: "gray" },
-  activeTab: { fontWeight: "bold", color: "black", borderBottomWidth: 2, borderBottomColor: "black" },
+  activeTab: { fontWeight: "bold", color: "white", backgroundColor:'#EE8E20', borderRadius:10 },
   dateText: { fontSize: 18, textAlign: "center", marginVertical: 10 },
   tabContainer: { flexDirection: "row", justifyContent: "space-around", marginBottom: 10 },
   noDataText: { fontSize: 16, color: "gray", textAlign: "center", marginTop: 20 },
