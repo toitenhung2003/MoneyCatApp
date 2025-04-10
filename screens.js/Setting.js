@@ -1,14 +1,59 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, Switch, Image } from "react-native";
+import React, { useState, useEffect, use } from "react";
+import { View, Text, StyleSheet, Switch, Image, Alert, TextInput } from "react-native";
 import { TouchableOpacity } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { Dialog, Portal, Button, Provider } from "react-native-paper";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
 const Setting = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [visible, setVisible] = useState(false);
   const [rating, setRating] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [user, setUser] = useState(null);
+  const navigation = useNavigation();
+  const [passwordDialogVisible, setPasswordDialogVisible] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+
+  useEffect(() => {
+    // 🔥 Lấy dữ liệu từ AsyncStorage khi vào màn hình chính
+    const getUserData = async () => {
+      const storedData = await AsyncStorage.getItem('userData');
+      if (storedData) {
+        await setUser(JSON.parse(storedData)); // Chuyển chuỗi JSON thành object
+        console.log("lấy dữ liệu user thành công");
+        console.log("user: ", user);
+
+
+      }
+    };
+
+    getUserData();
+  }, []);
+
+  const Logout = async () => {
+    Alert.alert(
+      "Thông báo",
+      "Bạn chắc chắn muốn đăng xuất!",
+      [
+        {
+          text: "OK", onPress: () => handleLogout()
+        }
+      ]
+    );
+
+
+  }
+
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem('userData');
+    console.log('Đăng xuất thành công ');
+    navigation.navigate('DangNhap');
+  };
 
   const showDialog = () => setVisible(true);
   const hideDialog = () => {
@@ -22,6 +67,29 @@ const Setting = () => {
       hideDialog();
     }, 1000);
   };
+  //hàm đóng mở dialog đổi mật khẩu
+  const showPasswordDialog = () => setPasswordDialogVisible(true);
+  const hidePasswordDialog = () => {
+    setPasswordDialogVisible(false);
+    setOldPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+  };
+  //hàm xử lý đổi mật khẩu
+  const handleChangePassword = () => {
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert("Lỗi", "Mật khẩu mới không khớp.");
+      return;
+    }
+
+    // Gọi API đổi mật khẩu ở đây nếu có
+    Alert.alert("Thành công", "Mật khẩu đã được thay đổi.");
+    hidePasswordDialog();
+  };
 
   return (
     <Provider>
@@ -30,8 +98,8 @@ const Setting = () => {
         <View style={styles.profileContainer}>
           <Image source={require('../assets/logo_app.png')} style={styles.avatar} />
           <View>
-            <Text style={[styles.profileName, darkMode && styles.darkText]}>Admin</Text>
-            <Text style={[styles.profileEmail, darkMode && styles.darkText]}>admin@gmail.com</Text>
+            <Text style={[styles.profileName, darkMode && styles.darkText]}>{user?.user?.username}</Text>
+            <Text style={[styles.profileEmail, darkMode && styles.darkText]}>{user?.user?._id}</Text>
           </View>
         </View>
 
@@ -60,13 +128,31 @@ const Setting = () => {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.option}>
+        <TouchableOpacity style={styles.option} onPress={()=>navigation.navigate('QuanLyNganSach')}>
+          <Icon name="money" size={20} color={darkMode ? "#FFD700" : "#1abc9c"} />
+          <View style={styles.optionText}>
+            <Text style={[styles.optionTitle, darkMode && styles.darkText]}>Quản lý ngân sách</Text>
+            <Text style={[styles.optionSubtitle, darkMode && styles.darkText]}>Đặt mức chi tiêu hợp lý</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.option} onPress={showPasswordDialog} >
+          <Icon name="key" size={20} color={darkMode ? "#ddd" : "#000"} />
+          <View style={styles.optionText}>
+            <Text style={[styles.optionTitle, darkMode && styles.darkText]}>Đổi mật khẩu</Text>
+            <Text style={[styles.optionSubtitle, darkMode && styles.darkText]}>Thay đổi mật khẩu của bạn</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.option} onPress={Logout}>
           <Icon name="sign-out" size={20} color={darkMode ? "#ddd" : "#000"} />
           <View style={styles.optionText}>
             <Text style={[styles.optionTitle, darkMode && styles.darkText]}>Log in</Text>
             <Text style={[styles.optionSubtitle, darkMode && styles.darkText]}>Đăng xuất khỏi ứng dụng</Text>
           </View>
         </TouchableOpacity>
+
+
 
         <Portal>
           <Dialog visible={visible} onDismiss={hideDialog} style={{ backgroundColor: darkMode ? "#333" : "white" }}>
@@ -88,6 +174,40 @@ const Setting = () => {
                   <Button onPress={handleSubmit}>Gửi</Button>
                 </>
               ) : null}
+            </Dialog.Actions>
+          </Dialog>
+        </Portal>
+
+       {/* dialog đổi mật khẩu */}
+        <Portal>
+          <Dialog visible={passwordDialogVisible} onDismiss={hidePasswordDialog} style={{ backgroundColor: darkMode ? "#333" : "#fff" }}>
+            <Dialog.Title style={{ textAlign: 'center', fontWeight: 'bold' }}>Thay đổi mật khẩu</Dialog.Title>
+            <Dialog.Content>
+              <TextInput
+                placeholder="Nhập mật khẩu cũ"
+                secureTextEntry
+                value={oldPassword}
+                onChangeText={setOldPassword}
+                style={{ marginBottom: 10, backgroundColor: "#f1f1f1", borderRadius: 8, padding:10 }}
+              />
+              <TextInput
+                placeholder="Nhập mật khẩu mới"
+                secureTextEntry
+                value={newPassword}
+                onChangeText={setNewPassword}
+                style={{ marginBottom: 10, backgroundColor: "#f1f1f1", borderRadius: 8,padding:10 }}
+              />
+              <TextInput
+                placeholder="Nhập lại mật khẩu mới"
+                secureTextEntry
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                style={{ marginBottom: 10, backgroundColor: "#f1f1f1", borderRadius: 8, padding:10 }}
+              />
+            </Dialog.Content>
+            <Dialog.Actions>
+              <Button onPress={hidePasswordDialog}>Hủy</Button>
+              <Button onPress={handleChangePassword}>Lưu</Button>
             </Dialog.Actions>
           </Dialog>
         </Portal>
@@ -127,8 +247,8 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     marginRight: 15,
     backgroundColor: "orange",
-    borderColor:'gray',
-    borderWidth:1
+    borderColor: 'gray',
+    borderWidth: 1
   },
   profileName: {
     fontSize: 18,

@@ -11,6 +11,7 @@ import ManHinhChao from '../screens.js/ManHinhChao';
 import DangNhap from '../screens.js/DangNhap';
 import DangKi from '../screens.js/DangKi';
 import QuenMatKhau from '../screens.js/QuenMatKhau';
+import QuanLyNganSach from '../screens.js/QuanLyNganSach';
 const Tab = createBottomTabNavigator();
 const StackMain = createNativeStackNavigator();
 function Menu() {
@@ -66,6 +67,7 @@ const Tabs = () => {
             <StackMain.Screen name = "DangNhap" component={DangNhap} options={{headerShown: false}}/>
             <StackMain.Screen name = "DangKi" component={DangKi} options={{headerShown: false}}/>
             <StackMain.Screen name = "QuenMatKhau" component={QuenMatKhau} options={{headerShown: false}}/>
+            <StackMain.Screen name = "QuanLyNganSach" component={QuanLyNganSach} options={{headerShown: false}}/>
 
         </StackMain.Navigator>
     )
