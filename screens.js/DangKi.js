@@ -1,21 +1,80 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
 const DangKi = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [rePass, setRePass] = useState('')
     const navigation = useNavigation();
+    const RengButton = async () => {
+        if (!email) {
+            Alert.alert("Hãy nhập Email");
+            return;
+        } else if (!password) {
+            Alert.alert("Hãy nhập Password");
+            return;
+        }else if(rePass!==password){
+            Alert.alert("Password nhập lại chưa đúng");
+            return;
+        }
+
+        try {
+            const response = await fetch('https://test-spending-management.glitch.me/users/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    "username": email,
+                    "password": password,
+                    "name": "this_is_your_name"
+                }),
+            });
+
+            const data = await response.json();
+            console.log(data.result.result);
+            if (data.result.errorCode == 1) {
+                Alert.alert("Email đã tồn tại")
+                console.log("emailfail: ", data.result.result);
+
+                return;
+            } else if (data.result.errorCode == 0) {
+                Alert.alert(
+                    "Thông báo",
+                    "Bạn đã đăng ký thành công!",
+                    [
+                        {
+                            text: "OK", onPress: () => {
+                                setEmail('');  // Xóa email
+                                setPassword('');  // Xóa password
+                                navigation.navigate('DangNhap')
+                            }
+                        }
+                    ]
+                );
+            }
+
+
+
+
+        } catch (error) {
+            Alert.alert("Lỗi kết nối", "Không thể kết nối đến server!");
+            console.log("error", error);
+
+        }
+        //   ()=>
+    }
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Tạo Tài Khoản</Text>
             <Text style={styles.subtitle}>Tạo tài khoản mới để quản lý chi tiêu hiệu quả ngay bây giờ!</Text>
-            <Image source={require("../assets/coin.png")} style={{height:100,width:100}} />
+            <Image source={require("../assets/coin.png")} style={{ height: 100, width: 100 }} />
 
             <TextInput
                 style={styles.input}
-                placeholder="Email"
+                placeholder="Tên đăng nhập"
                 placeholderTextColor="#999"
                 value={email}
                 onChangeText={setEmail}
@@ -28,23 +87,23 @@ const DangKi = () => {
                 value={password}
                 onChangeText={setPassword}
             />
-              <TextInput
+            <TextInput
                 style={[styles.input, styles.passwordInput]}
                 placeholder="Nhập lại mật khẩu"
                 placeholderTextColor="#999"
                 secureTextEntry
-                value={password}
-                onChangeText={setPassword}
+                value={rePass}
+                onChangeText={setRePass}
             />
-            <TouchableOpacity 
+            <TouchableOpacity
                 style={styles.loginButton}
-                onPress={()=>navigation.navigate('DangNhap')}
+                onPress={RengButton}
 
-                >
+            >
                 <Text style={styles.loginButtonText}>Đăng Ký</Text>
             </TouchableOpacity>
             <TouchableOpacity
-                onPress={()=>navigation.navigate('DangNhap')}
+                onPress={() => navigation.navigate('DangNhap')}
             >
                 <Text style={styles.createAccount}>Bạn đã có tài khoản?</Text>
             </TouchableOpacity>
@@ -79,7 +138,7 @@ const styles = StyleSheet.create({
         color: '#333',
         marginBottom: '2%',
         fontWeight: 'bold',
-        textAlign:'center'
+        textAlign: 'center'
     },
     input: {
         width: '100%',
@@ -106,7 +165,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         alignItems: 'center',
         marginBottom: 20,
-        marginTop:20
+        marginTop: 20
     },
     loginButtonText: {
         color: 'white',

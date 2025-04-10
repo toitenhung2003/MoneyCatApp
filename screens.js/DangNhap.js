@@ -1,21 +1,93 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DangNhap = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const navigation = useNavigation();
+
+    const LoginButton = async () => {
+        if (!email) {
+            Alert.alert("Hãy nhập Email");
+            return;
+        } else if (!password) {
+            Alert.alert("Hãy nhập Password");
+            return;
+        }
+
+        try {
+            const response = await fetch('https://test-spending-management.glitch.me/users/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    "username":email,
+                    "password":password,
+                }),
+            });
+
+            const data = await response.json();
+            const username = "Username not found!"
+            const passfail = "Password incorrect"
+            console.log(data.result.result);
+            if(data.result.result==username){
+                Alert.alert("Email không chính xác")
+                console.log("emailfail: ",data.result.result);
+                
+                return;
+            } else if(data.result.result==passfail){
+                Alert.alert("Password không chính xác")
+                console.log("passfail: ",data.result.result);
+                return;
+            }else if(data.result.errorCode==0){
+                // Alert.alert("Đăng nhập thành công")
+                const storedData = await AsyncStorage.getItem('userData');
+                if(storedData==null){
+                    await AsyncStorage.setItem('userData', JSON.stringify(data.result.result));
+                    console.log("Thêm dữ liệu thành công");
+                    setEmail('')
+                    setPassword('')
+                    navigation.navigate('ManhinhChinh')
+                }else{
+                    await AsyncStorage.removeItem('userData');
+                    await AsyncStorage.setItem('userData', JSON.stringify(data.result.result));
+                    console.log("Thêm dữ liệu thành công");
+                    setEmail('')
+                    setPassword('')
+                    navigation.navigate('ManhinhChinh')
+                }
+                
+            }
+            
+
+            // if (response.ok) {
+            //     Alert.alert("Đăng nhập thành công!", data);
+            // } else {
+            //     Alert.alert("Lỗi đăng nhập", data.error || "Có lỗi xảy ra");
+            // }
+            
+            
+        } catch (error) {
+            Alert.alert("Lỗi Đăng Nhập", "Không thể kết nối đến server!");
+            Alert.alert("error", error);
+            console.log("error", error);
+            
+        }
+        //   ()=>
+    }
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Đăng Nhập</Text>
             <Text style={styles.subtitle}>Chào Mừng Bạn Quay Trở Lại !</Text>
-            <Image source={require("../assets/logo_app.png")} style={{height:100,width:100}} />
+            <Image source={require("../assets/logo_app.png")} style={{ height: 100, width: 100 }} />
 
             <TextInput
                 style={styles.input}
-                placeholder="Email"
+                placeholder="Tên đăng nhập"
                 placeholderTextColor="#999"
                 value={email}
                 onChangeText={setEmail}
@@ -30,19 +102,19 @@ const DangNhap = () => {
             />
 
             <TouchableOpacity style={styles.forgotPassword}
-                onPress={()=>navigation.navigate('QuenMatKhau')}
+                onPress={() => navigation.navigate('QuenMatKhau')}
             >
                 <Text style={styles.forgotText}>Quên mật khẩu?</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
                 style={styles.loginButton}
-                onPress={()=>navigation.navigate('ManhinhChinh')}
-                >
+                onPress={LoginButton}
+            >
                 <Text style={styles.loginButtonText}>Đăng Nhập</Text>
             </TouchableOpacity>
             <TouchableOpacity
-                onPress={()=>navigation.navigate('DangKi')}
+                onPress={() => navigation.navigate('DangKi')}
             >
                 <Text style={styles.createAccount}>Tạo tài khoản mới</Text>
 

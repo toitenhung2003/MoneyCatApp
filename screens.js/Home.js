@@ -1,11 +1,69 @@
-import { Image, StyleSheet, Text, View } from 'react-native'
-import React, { useState } from 'react'
+import { Alert, Image, StyleSheet, Text, View } from 'react-native'
+import React, { useState, useEffect } from 'react'
 import { TouchableOpacity } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import ChiScreen from './ChiScreen';
 import ThuScreen from './ThuScreen';
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState("TIỀN CHI");
+  const [Category,setCategory] = useState()
+  const [token2,setToken]=useState()
+  var data;
+
+  const getCategoryData = async () => {
+    const storedData = await AsyncStorage.getItem('userData');
+    if (storedData) {
+      const userData = JSON.parse(storedData);
+      const token = userData.accessToken
+      setToken(token)
+      await console.log("lấy dữ liệu user thành công");
+      console.log("token: ", token);
+      
+      
+      try {
+        const response = await fetch('https://test-spending-management.glitch.me/transactions/allCategoryByDate', {
+          method: 'POST',
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            "fromDate": "2024-01-10",
+            "toDate": "2025-12-20"
+          }),
+        });
+
+        data = await response.json();
+        if (data?.result?.errorCode==1) {
+          setCategory()
+          
+        }else{
+          setCategory(data)
+          console.log("mục thu chi: ", data);
+        }
+        
+        
+
+      } catch (error) {
+        Alert.alert("Lỗi kết nối", "Không thể kết nối đến server!");
+        console.log("Lỗi ở home", error);
+
+      }
+      
+      
+    }
+    
+
+  };
+  useEffect(() => {
+    // 🔥 Lấy dữ liệu từ AsyncStorage khi vào màn hình chính
+    
+     
+    getCategoryData();
+  }, []);
+
+
   return (
     <View style={styles.container}>
       {/* Tab Buttons */}
@@ -31,9 +89,9 @@ const Home = () => {
       {/* Tab Content */}
       <View style={styles.contentContainer}>
         {activeTab === "TIỀN CHI" ? (
-          <ChiScreen/>
+          <ChiScreen CategoryChi ={Category} token={token2} onRefresh={getCategoryData}/>
         ) : (
-          <ThuScreen/>
+          <ThuScreen CategoryThu ={Category} token={token2} onRefresh={getCategoryData}/>
         )}
       </View>
     </View>
@@ -48,7 +106,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     paddingTop: 40,
-    
+
   },
   tabContainer: {
     flexDirection: "row",
@@ -61,7 +119,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#D8D2DC", // Màu xám nhạt
   },
   activeTab: {
-    backgroundColor: "#EE8E20", 
+    backgroundColor: "#EE8E20",
   },
   tabText: {
     fontSize: 14,
@@ -73,7 +131,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    
+
   },
   contentText: {
     fontSize: 18,
