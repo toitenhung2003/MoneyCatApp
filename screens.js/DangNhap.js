@@ -3,10 +3,12 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } fro
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import * as Updates from 'expo-updates'; // Thêm import để reload app
 const DangNhap = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+
     const navigation = useNavigation();
 
     const LoginButton = async () => {
@@ -25,8 +27,8 @@ const DangNhap = () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    "username":email,
-                    "password":password,
+                    "username": email,
+                    "password": password,
                 }),
             });
 
@@ -34,48 +36,50 @@ const DangNhap = () => {
             const username = "Username not found!"
             const passfail = "Password incorrect"
             console.log(data.result.result);
-            if(data.result.result==username){
+            if (data.result.result == username) {
                 Alert.alert("Email không chính xác")
-                console.log("emailfail: ",data.result.result);
-                
+                console.log("emailfail: ", data.result.result);
+
                 return;
-            } else if(data.result.result==passfail){
+            } else if (data.result.result == passfail) {
                 Alert.alert("Password không chính xác")
-                console.log("passfail: ",data.result.result);
+                console.log("passfail: ", data.result.result);
                 return;
-            }else if(data.result.errorCode==0){
+            } else if (data.result.errorCode == 0) {
                 // Alert.alert("Đăng nhập thành công")
                 const storedData = await AsyncStorage.getItem('userData');
-                if(storedData==null){
+                if (storedData == null) {
                     await AsyncStorage.setItem('userData', JSON.stringify(data.result.result));
                     console.log("Thêm dữ liệu thành công");
                     setEmail('')
                     setPassword('')
                     navigation.navigate('ManhinhChinh')
-                }else{
+                } else {
                     await AsyncStorage.removeItem('userData');
                     await AsyncStorage.setItem('userData', JSON.stringify(data.result.result));
                     console.log("Thêm dữ liệu thành công");
+
+                   await Updates.reloadAsync();  // Reload ứng dụng sau khi đăng nhập thành công
                     setEmail('')
                     setPassword('')
                     navigation.navigate('ManhinhChinh')
                 }
-                
+
             }
-            
+
 
             // if (response.ok) {
             //     Alert.alert("Đăng nhập thành công!", data);
             // } else {
             //     Alert.alert("Lỗi đăng nhập", data.error || "Có lỗi xảy ra");
             // }
-            
-            
+
+
         } catch (error) {
             Alert.alert("Lỗi Đăng Nhập", "Không thể kết nối đến server!");
             Alert.alert("error", error);
             console.log("error", error);
-            
+
         }
         //   ()=>
     }
@@ -92,14 +96,27 @@ const DangNhap = () => {
                 value={email}
                 onChangeText={setEmail}
             />
-            <TextInput
-                style={[styles.input, styles.passwordInput]}
-                placeholder="Mật khẩu"
-                placeholderTextColor="#999"
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-            />
+            <View style={styles.passwordContainer}> 
+                <TextInput
+                    style={{ flex: 1, 
+                        padding: 15,
+                        fontSize: 16, }}
+                    placeholder="Mật khẩu"
+                    placeholderTextColor="#999"
+                    secureTextEntry={!showPassword} 
+                    value={password}
+                    onChangeText={setPassword}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}> 
+                    <FontAwesome
+                        name={showPassword ? 'eye-slash' : 'eye'}
+                        size={24}
+                        color="#999"
+                        style={{ marginRight: 10 }}
+                    />
+                </TouchableOpacity>
+            </View>
+
 
             <TouchableOpacity style={styles.forgotPassword}
                 onPress={() => navigation.navigate('QuenMatKhau')}
@@ -200,6 +217,17 @@ const styles = StyleSheet.create({
     icon: {
         marginHorizontal: 25,
     },
+    passwordContainer: { 
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#FF8000',
+        borderRadius: 10,
+        marginBottom: 10,
+        paddingRight:10,
+        
+    },
+    
 });
 
 export default DangNhap;

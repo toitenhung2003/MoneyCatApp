@@ -1,13 +1,14 @@
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { View, Text, StyleSheet, Switch, Image, Alert, TextInput } from "react-native";
 import { TouchableOpacity } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { Dialog, Portal, Button, Provider } from "react-native-paper";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { ThemeContext } from "../contexts/ThemeContext"; // 📌 Import context
 
 const Setting = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode } = useContext(ThemeContext); // 📌 Dùng darkMode toàn cục
   const [visible, setVisible] = useState(false);
   const [rating, setRating] = useState(0);
   const [submitted, setSubmitted] = useState(false);
@@ -17,42 +18,40 @@ const Setting = () => {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
+  const [accountDialogVisible, setAccountDialogVisible] = useState(false);
+  const [editedUsername, setEditedUsername] = useState('');
+  const [avatar, setAvatar] = useState(null);
 
   useEffect(() => {
-    // 🔥 Lấy dữ liệu từ AsyncStorage khi vào màn hình chính
-    const getUserData = async () => {
-      const storedData = await AsyncStorage.getItem('userData');
-      if (storedData) {
-        await setUser(JSON.parse(storedData)); // Chuyển chuỗi JSON thành object
-        console.log("lấy dữ liệu user thành công");
-        console.log("user: ", user);
-
-
-      }
-    };
-
     getUserData();
   }, []);
 
-  const Logout = async () => {
-    Alert.alert(
-      "Thông báo",
-      "Bạn chắc chắn muốn đăng xuất!",
-      [
-        {
-          text: "OK", onPress: () => handleLogout()
-        }
-      ]
-    );
+  useFocusEffect(
+    React.useCallback(() => {
+      getUserData();
+    }, [])
+  );
 
+  const getUserData = async () => {
+    const storedData = await AsyncStorage.getItem('userData');
+    if (storedData) {
+      setUser(JSON.parse(storedData));
+    }
+  };
 
-  }
+  const Logout = () => {
+    Alert.alert("Thông báo", "Bạn chắc chắn muốn đăng xuất!", [
+      { text: "OK", onPress: () => handleLogout() }
+    ]);
+  };
 
   const handleLogout = async () => {
     await AsyncStorage.removeItem('userData');
-    console.log('Đăng xuất thành công ');
-    navigation.navigate('DangNhap');
+    setUser(null);
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'DangNhap' }],
+    });
   };
 
   const showDialog = () => setVisible(true);
@@ -61,13 +60,14 @@ const Setting = () => {
     setSubmitted(false);
     setRating(0);
   };
+
   const handleSubmit = () => {
     setSubmitted(true);
     setTimeout(() => {
       hideDialog();
     }, 1000);
   };
-  //hàm đóng mở dialog đổi mật khẩu
+
   const showPasswordDialog = () => setPasswordDialogVisible(true);
   const hidePasswordDialog = () => {
     setPasswordDialogVisible(false);
@@ -75,7 +75,7 @@ const Setting = () => {
     setNewPassword('');
     setConfirmPassword('');
   };
-  //hàm xử lý đổi mật khẩu
+
   const handleChangePassword = () => {
     if (!oldPassword || !newPassword || !confirmPassword) {
       Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin.");
@@ -85,58 +85,75 @@ const Setting = () => {
       Alert.alert("Lỗi", "Mật khẩu mới không khớp.");
       return;
     }
-
-    // Gọi API đổi mật khẩu ở đây nếu có
     Alert.alert("Thành công", "Mật khẩu đã được thay đổi.");
     hidePasswordDialog();
   };
 
+  const handleToggleDarkMode = async () => {
+    if (!user?.user?._id) return;
+    const newValue = !darkMode;
+    await AsyncStorage.setItem(`darkMode_${user.user._id}`, JSON.stringify(newValue));
+    toggleDarkMode(); // cập nhật UI
+  };
+  
   return (
     <Provider>
       <View style={[styles.container, darkMode && styles.darkContainer]}>
         <Text style={[styles.header, darkMode && styles.darkText]}>Cài đặt</Text>
+        
         <View style={styles.profileContainer}>
           <Image source={require('../assets/logo_app.png')} style={styles.avatar} />
           <View>
-            <Text style={[styles.profileName, darkMode && styles.darkText]}>{user?.user?.username}</Text>
-            <Text style={[styles.profileEmail, darkMode && styles.darkText]}>{user?.user?._id}</Text>
+            <Text style={[styles.profileName, darkMode && styles.darkText]}>
+              {user?.user?.username}
+            </Text>
+            <Text style={[styles.profileEmail, darkMode && styles.darkText]}>
+              {user?.user?._id}
+            </Text>
           </View>
         </View>
 
-        <TouchableOpacity style={styles.option}>
-          <Icon name="user" size={20} color={darkMode ? "#ff9999" : "#ff4d4d"} />
+        <TouchableOpacity
+          style={styles.option}
+          onPress={() => {
+            setEditedUsername(user?.user?.username || '');
+            setAccountDialogVisible(true);
+          }}
+        >
+          <Icon name="user" size={20} color="#ff4d4d"/>
           <View style={styles.optionText}>
-            <Text style={[styles.optionTitle, darkMode && styles.darkText]}>Account</Text>
-            <Text style={[styles.optionSubtitle, darkMode && styles.darkText]}>Security notifications, change number</Text>
+            <Text style={[styles.optionTitle, darkMode && styles.darkText]}>Tài khoản</Text>
+            <Text style={[styles.optionSubtitle, darkMode && styles.darkText]}>Ảnh đại diện, Id, Tên đăng nhập</Text>
           </View>
         </TouchableOpacity>
 
         <View style={styles.option}>
           <Icon name="adjust" size={20} color="#ffcc00" />
           <View style={styles.optionText}>
-            <Text style={[styles.optionTitle, darkMode && styles.darkText]}>Dark Mode</Text>
-            <Text style={[styles.optionSubtitle, darkMode && styles.darkText]}>Change color app</Text>
+            <Text style={[styles.optionTitle, darkMode && styles.darkText]}>Chế độ tối</Text>
+            <Text style={[styles.optionSubtitle, darkMode && styles.darkText]}>Thay đổi màu sắc của ứng dụng</Text>
           </View>
-          <Switch value={darkMode} onValueChange={() => setDarkMode(!darkMode)} />
+          <Switch value={darkMode} onValueChange={handleToggleDarkMode} />
+
         </View>
 
         <TouchableOpacity style={styles.option} onPress={showDialog}>
-          <Icon name="star" size={20} color={darkMode ? "#FFD700" : "#000"} />
+          <Icon name="star" size={20} color="#FFD700"  />
           <View style={styles.optionText}>
             <Text style={[styles.optionTitle, darkMode && styles.darkText]}>Rate App</Text>
             <Text style={[styles.optionSubtitle, darkMode && styles.darkText]}>Đánh giá ứng dụng</Text>
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.option} onPress={()=>navigation.navigate('QuanLyNganSach')}>
-          <Icon name="money" size={20} color={darkMode ? "#FFD700" : "#1abc9c"} />
+        <TouchableOpacity style={styles.option} onPress={() => navigation.navigate('QuanLyNganSach')}>
+          <Icon name="money" size={20} color="#1abc9c" />
           <View style={styles.optionText}>
             <Text style={[styles.optionTitle, darkMode && styles.darkText]}>Quản lý ngân sách</Text>
             <Text style={[styles.optionSubtitle, darkMode && styles.darkText]}>Đặt mức chi tiêu hợp lý</Text>
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.option} onPress={showPasswordDialog} >
+        <TouchableOpacity style={styles.option} onPress={showPasswordDialog}>
           <Icon name="key" size={20} color={darkMode ? "#ddd" : "#000"} />
           <View style={styles.optionText}>
             <Text style={[styles.optionTitle, darkMode && styles.darkText]}>Đổi mật khẩu</Text>
@@ -147,13 +164,12 @@ const Setting = () => {
         <TouchableOpacity style={styles.option} onPress={Logout}>
           <Icon name="sign-out" size={20} color={darkMode ? "#ddd" : "#000"} />
           <View style={styles.optionText}>
-            <Text style={[styles.optionTitle, darkMode && styles.darkText]}>Log in</Text>
+            <Text style={[styles.optionTitle, darkMode && styles.darkText]}>Log out</Text>
             <Text style={[styles.optionSubtitle, darkMode && styles.darkText]}>Đăng xuất khỏi ứng dụng</Text>
           </View>
         </TouchableOpacity>
 
-
-
+        {/* Dialog đánh giá */}
         <Portal>
           <Dialog visible={visible} onDismiss={hideDialog} style={{ backgroundColor: darkMode ? "#333" : "white" }}>
             <Dialog.Title style={[styles.dialogTitle, darkMode && styles.darkText]}>Đánh giá ứng dụng</Dialog.Title>
@@ -168,46 +184,84 @@ const Setting = () => {
               {submitted && <Text style={styles.thankYouText}>Cảm ơn bạn đã đánh giá!</Text>}
             </Dialog.Content>
             <Dialog.Actions>
-              {!submitted ? (
+              {!submitted && (
                 <>
                   <Button onPress={hideDialog}>Hủy</Button>
                   <Button onPress={handleSubmit}>Gửi</Button>
                 </>
-              ) : null}
+              )}
             </Dialog.Actions>
           </Dialog>
         </Portal>
 
-       {/* dialog đổi mật khẩu */}
+        {/* Dialog đổi mật khẩu */}
         <Portal>
           <Dialog visible={passwordDialogVisible} onDismiss={hidePasswordDialog} style={{ backgroundColor: darkMode ? "#333" : "#fff" }}>
-            <Dialog.Title style={{ textAlign: 'center', fontWeight: 'bold' }}>Thay đổi mật khẩu</Dialog.Title>
+            <Dialog.Title style={{ textAlign: 'center', fontWeight: 'bold', color: darkMode ? "white" : "black" }}>Thay đổi mật khẩu</Dialog.Title>
             <Dialog.Content>
               <TextInput
                 placeholder="Nhập mật khẩu cũ"
                 secureTextEntry
                 value={oldPassword}
                 onChangeText={setOldPassword}
-                style={{ marginBottom: 10, backgroundColor: "#f1f1f1", borderRadius: 8, padding:10 }}
+                style={{ marginBottom: 10, backgroundColor: "#f1f1f1", borderRadius: 8, padding: 10 }}
               />
               <TextInput
                 placeholder="Nhập mật khẩu mới"
                 secureTextEntry
                 value={newPassword}
                 onChangeText={setNewPassword}
-                style={{ marginBottom: 10, backgroundColor: "#f1f1f1", borderRadius: 8,padding:10 }}
+                style={{ marginBottom: 10, backgroundColor: "#f1f1f1", borderRadius: 8, padding: 10 }}
               />
               <TextInput
                 placeholder="Nhập lại mật khẩu mới"
                 secureTextEntry
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
-                style={{ marginBottom: 10, backgroundColor: "#f1f1f1", borderRadius: 8, padding:10 }}
+                style={{ marginBottom: 10, backgroundColor: "#f1f1f1", borderRadius: 8, padding: 10 }}
               />
             </Dialog.Content>
             <Dialog.Actions>
               <Button onPress={hidePasswordDialog}>Hủy</Button>
               <Button onPress={handleChangePassword}>Lưu</Button>
+            </Dialog.Actions>
+          </Dialog>
+        </Portal>
+
+        {/* Dialog tài khoản */}
+        <Portal>
+          <Dialog
+            visible={accountDialogVisible}
+            onDismiss={() => setAccountDialogVisible(false)}
+            style={{ backgroundColor: darkMode ? '#333' : '#fff' }}
+          >
+            <Dialog.Content style={{ alignItems: 'center' }}>
+              <Image
+                source={require('../assets/logo_app.png')}
+                style={{ width: 80, height: 80, borderRadius: 40, marginBottom: 10 }}
+              />
+              <Text style={{ color: darkMode ? "#fff" : "#000", marginBottom: 5 }}>
+                id: {user?.user?._id}
+              </Text>
+              <Text style={{ alignSelf: 'flex-start', fontWeight: 'bold', marginTop: 10, color: darkMode ? "#fff" : "#000" }}>
+                Username
+              </Text>
+              <TextInput
+                value={user?.user?.username}
+                editable={true}
+                style={{
+                  backgroundColor: '#f1f1f1',
+                  borderRadius: 8,
+                  padding: 10,
+                  alignSelf: 'stretch',
+                  marginTop: 5,
+                  color: "#000"
+                }}
+              />
+            </Dialog.Content>
+            <Dialog.Actions>
+              <Button onPress={() => setAccountDialogVisible(false)}>Lưu</Button>
+              <Button onPress={() => setAccountDialogVisible(false)}>Đóng</Button>
             </Dialog.Actions>
           </Dialog>
         </Portal>

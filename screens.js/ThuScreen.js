@@ -1,9 +1,10 @@
 import { ActivityIndicator, Alert, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { Button, Dialog, Portal, Provider } from 'react-native-paper';
 import { TouchableOpacity } from 'react-native';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import moment from 'moment';
+import { ThemeContext } from '../contexts/ThemeContext';
 
 const ThuScreen = ({ CategoryThu, token, onRefresh }) => {
   const [categories, setCategories] = useState([
@@ -17,8 +18,10 @@ const ThuScreen = ({ CategoryThu, token, onRefresh }) => {
 
 
   }, []);
-  const [amount, setAmount] = useState("0");
+  const [amount, setAmount] = useState("");
   // const [date, setDate] = useState("12/02/2025 (TH 4)");
+  const { darkMode } = useContext(ThemeContext);
+
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [note, setNote] = useState("");
@@ -72,7 +75,7 @@ const ThuScreen = ({ CategoryThu, token, onRefresh }) => {
   };
 
   const handleAddTransactions = async () => {
-
+    const value = parseFloat(amount.replace(/,/g, ''));
 
     if (note.trim() == '') {
       Alert.alert("Bạn quên chưa điền ghi chú kìa")
@@ -97,7 +100,7 @@ const ThuScreen = ({ CategoryThu, token, onRefresh }) => {
           body: JSON.stringify({
             "categoryId": idCategory,
             "type": "0",
-            "amount": amount,
+            "amount": value,
             "date": formattedDate,
             "description": note
           }),
@@ -247,128 +250,147 @@ const ThuScreen = ({ CategoryThu, token, onRefresh }) => {
   };
   return (
     <Provider>
-      <SafeAreaView style={styles.container}>
-        <View style={{width:350, height:'100%'}}>
-        <Text style={styles.label}>NGÀY</Text>
-        <TouchableOpacity onPress={openDatePicker}>
-          <TextInput
-            style={[styles.input, { color: 'black' }]}
-            value={date.toLocaleDateString("vi-VN")}
-            editable={false}
-          />
-        </TouchableOpacity>
+      <SafeAreaView style={[styles.container, { backgroundColor: darkMode ? '#222' : 'white' }]}>
+        <View style={{ width: 350, height: '100%' }}>
+          <View style={[styles.containerItem, styles.darkContainerItem]}>
+            <Text style={[styles.label, darkMode && styles.darklabel]}>Ngày</Text>
 
-
-        <Text style={styles.label}>GHI CHÚ</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Chưa nhập vào"
-          value={note}
-          onChangeText={(txt) => {
-            setNote(txt);
-          }}
-        />
-
-        <Text style={styles.label}>TIỀN THU</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          value={amount}
-          onChangeText={txt => setAmount(txt)}
-        />
-        <Text style={styles.currencyText}>{formatVietnameseCurrency(amount)}</Text>
-
-        <Text style={styles.label}>DANH MỤC</Text>
-        <ScrollView contentContainerStyle={styles.categoryContainer} style={{flex:1}}>
-          {Array.isArray(CategoryThu?.result?.result) && CategoryThu?.result?.result.length > 0 ? (
-            CategoryThu?.result?.result.filter(item => item.type == 0).map(item => (
-              <View key={item?._id}>
-                <TouchableOpacity
-                  style={[styles.categoryButton, item?._id === idCategory ? styles.selectedCategory : {}]}
-                  onLongPress={() => handleLongPress(item?.category, item?._id)}
-                  onPress={() => {
-                    if (categories === 'Khác...') {
-                      setIsAddDialogVisible(true);
-                    } else {
-                      setSelectedCategory(prev => (prev === item?.category ? null : item?.category));
-                      setIdCategory(prev => (prev === item?._id ? null : item?._id))
-                    }
-                  }}
-                >
-                  <Text style={styles.categoryText}>{truncateText(item?.category)}</Text>
-
-                </TouchableOpacity>
-
-              </View>
-            ))
-          ) : (
-            <Text style={styles.noDataText}>Không có dữ liệu</Text>
-          )}
-        </ScrollView>
-        <TouchableOpacity
-          // key={0}
-          style={[styles.categoryButton, categories === selectedCategory ? styles.selectedCategory : {}]}
-          // onLongPress={() => handleLongPress(item.category)}
-          onPress={() => {
-            // if (categories === 'Khác...') {
-            setIsAddDialogVisible(true);
-            // } else {
-            //   setSelectedCategory(prev => (prev === item.category ? null : item.category));
-            // }
-          }}
-        >
-          <Text style={styles.categoryText}>{("Thêm danh mục")}</Text>
-
-        </TouchableOpacity>
-        <Portal>
-          <Dialog visible={isDialogVisible} onDismiss={() => setIsDialogVisible(false)}>
-            <Dialog.Title>Chỉnh sửa danh mục</Dialog.Title>
-            <Dialog.Content>
+            <TouchableOpacity onPress={openDatePicker}>
               <TextInput
-                style={styles.input}
-                value={editedCategory}
-                onChangeText={setEditedCategory}
+                style={[styles.input, { color: 'black' }]}
+                value={date.toLocaleDateString("vi-VN")}
+                editable={false}
               />
-            </Dialog.Content>
-            <Dialog.Actions>
-              <Button onPress={() => setIsDialogVisible(false)}>Hủy</Button>
-              <Button onPress={handleEditCategory}>Lưu</Button>
-              <Button onPress={handleDeleteCategory} buttonColor="#f111">Xóa</Button>
-
-            </Dialog.Actions>
-          </Dialog>
-        </Portal>
-
-        <TouchableOpacity style={styles.submitButton} onPress={handleAddTransactions}>
-          <Text style={styles.submitText}>NHẬP KHOẢN THU</Text>
-        </TouchableOpacity>
-        <Portal>
-          <Dialog style={{ backgroundColor: 'white' }} visible={isAddDialogVisible} onDismiss={() => isAddDialogVisible(false)}>
-            <Dialog.Title>Thêm danh mục</Dialog.Title>
-            <Dialog.Content>
-              <TextInput
-                style={styles.input}
-                value={newCategory}
-                onChangeText={setNewCategory}
-                placeholder="Nhập danh mục mới"
-              />
-            </Dialog.Content>
-            <Dialog.Actions>
-              <Button onPress={() => setIsDialogVisible(false)}>Hủy</Button>
-              <Button onPress={handleAddCategory}>Thêm</Button>
-            </Dialog.Actions>
-          </Dialog>
-        </Portal>
+            </TouchableOpacity>
+          </View>
 
 
-        {/* {loading && (
+          <View style={[styles.containerItem, styles.darkContainerItem]}>
+            <Text style={[styles.label, darkMode && styles.darklabel]}>Ghi Chú</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: darkMode ? "#222" : 'white', textAlign: 'left', marginBottom: 1, fontWeight: 'normal', fontSize: 18, color: darkMode ? '#eee' : '#333', }]}
+              placeholder="Chưa nhập vào"
+              value={note}
+              placeholderTextColor={darkMode ? '#eee' : '#333'}
+              onChangeText={(txt) => {
+                setNote(txt);
+              }}
+            />
+          </View>
+
+          <View style={[styles.containerItem, styles.darkContainerItem]}>
+            <Text style={[styles.label, darkMode && styles.darklabel]}>Tiền Thu</Text>
+            <TextInput
+              style={[styles.input, { textAlign: 'left', marginBottom: 2, backgroundColor: darkMode ? "#222" : 'white', color: darkMode ? 'white' : 'black' }]}
+              keyboardType="numeric"
+              value={amount}
+              onChangeText={(text) => {
+                // Xóa mọi ký tự không phải số
+                const raw = text.replace(/[^0-9]/g, '');
+                // Format lại với dấu phẩy
+                const formatted = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+                setAmount(formatted);
+              }}
+              placeholder='0'
+              placeholderTextColor={darkMode ? '#eee' : '#333'}
+
+            />
+          </View>
+
+          <Text style={[styles.label, { marginTop: 10 }, darkMode && styles.darklabel]}>Danh Mục</Text>
+          <ScrollView contentContainerStyle={[styles.categoryContainer, { backgroundColor: darkMode ? '#333' : '#f1f2f6' }]}>
+
+            {Array.isArray(CategoryThu?.result?.result) && CategoryThu?.result?.result.length > 0 ? (
+              CategoryThu?.result?.result.filter(item => item.type == 0).map(item => (
+                <View key={item?._id}>
+                  <TouchableOpacity
+                    style={[styles.categoryButton, item?._id === idCategory ? styles.selectedCategory : {}, { backgroundColor: darkMode ? '#222' : 'white' }]}
+                    onLongPress={() => handleLongPress(item?.category, item?._id)}
+                    onPress={() => {
+                      if (categories === 'Khác...') {
+                        setIsAddDialogVisible(true);
+                      } else {
+                        setSelectedCategory(prev => (prev === item?.category ? null : item?.category));
+                        setIdCategory(prev => (prev === item?._id ? null : item?._id))
+                      }
+                    }}
+                  >
+                    <Text style={[styles.categoryText, { color: darkMode ? 'white' : 'black' }]}>{truncateText(item?.category)}</Text>
+
+                  </TouchableOpacity>
+
+                </View>
+              ))
+            ) : (
+              <Text style={[styles.noDataText, { color: darkMode ? 'white' : 'black' }]}>Không có dữ liệu</Text>
+
+            )}
+          </ScrollView>
+          <TouchableOpacity
+            // key={0}
+            style={[styles.categoryButton, styles.selectedCategory, { backgroundColor: darkMode ? '#333' : 'white' }]}
+            // onLongPress={() => handleLongPress(item.category)}
+            onPress={() => {
+              // if (categories === 'Khác...') {
+              setIsAddDialogVisible(true);
+              // } else {
+              //   setSelectedCategory(prev => (prev === item.category ? null : item.category));
+              // }
+            }}
+          >
+            <Text style={[styles.categoryText, { color: darkMode ? 'white' : 'black' }]}>{("Thêm danh mục")}</Text>
+
+
+          </TouchableOpacity>
+          <Portal>
+            <Dialog style={{ backgroundColor: 'white' }} visible={isDialogVisible} onDismiss={() => setIsDialogVisible(false)}>
+              <Dialog.Title>Xóa danh mục</Dialog.Title>
+              <Dialog.Content>
+                <TextInput
+                  style={styles.inputD}
+                  value={editedCategory}
+                  onChangeText={setEditedCategory}
+                />
+              </Dialog.Content>
+              <Dialog.Actions>
+                <Button onPress={() => setIsDialogVisible(false)}>Hủy</Button>
+                <Button onPress={handleDeleteCategory} buttonColor="#f111">Xóa</Button>
+
+              </Dialog.Actions>
+            </Dialog>
+          </Portal>
+
+          <TouchableOpacity style={styles.submitButton} onPress={handleAddTransactions}>
+            <Text style={styles.submitText}>NHẬP KHOẢN THU</Text>
+          </TouchableOpacity>
+          <Portal>
+            <Dialog style={{ backgroundColor: 'white' }} visible={isAddDialogVisible} onDismiss={() => isAddDialogVisible(false)}>
+              <Dialog.Title>Thêm danh mục</Dialog.Title>
+              <Dialog.Content>
+                <TextInput
+                  style={styles.inputD}
+                  value={newCategory}
+                  onChangeText={setNewCategory}
+                  placeholder="Nhập danh mục mới"
+                />
+              </Dialog.Content>
+              <Dialog.Actions>
+                <Button onPress={() => setIsDialogVisible(false)}>Hủy</Button>
+                <Button onPress={handleAddCategory}>Thêm</Button>
+              </Dialog.Actions>
+            </Dialog>
+          </Portal>
+
+
+          {/* {loading && (
           <View style={styles.overlay}>
             <ActivityIndicator size="large" color="white" />
             <Text style={styles.loadingText}>Đang xử lý...</Text>
           </View>
         )} */}
         </View>
-        
+
       </SafeAreaView>
     </Provider>
   )
@@ -383,15 +405,23 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   label: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "bold",
   },
+  darklabel: {
+    color: 'white'
+  }
+  ,
   input: {
-    backgroundColor: "white",
-    padding: 10,
+    backgroundColor: "#ffeaa7",
+    padding: 5,
     borderRadius: 5,
-    marginVertical: 5,
-    borderWidth: 1,
+    fontWeight: 'bold',
+    width: 300,
+    textAlign: 'center',
+    fontSize: 20,
+    marginBottom: 5,
+    marginLeft: 10
   },
   categoryContainer: {
     flexDirection: "row",
@@ -399,11 +429,13 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     backgroundColor: '#f1f2f6',
     flexGrow: 1,
+    marginTop: 15,
+    borderRadius:10
 
   },
   categoryButton: {
     backgroundColor: 'white',
-    padding: 12,
+    padding: 11,
     borderRadius: 8,
     alignItems: 'center',
     minWidth: '30%',
@@ -413,12 +445,13 @@ const styles = StyleSheet.create({
 
   },
   selectedCategory: {
-    borderWidth: 2.5,
+    borderWidth: 2,
     borderColor: '#EE8E20'
   },
   categoryText: {
     color: "black",
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: 'bold'
   },
   submitButton: {
     backgroundColor: "#EE8E20",
@@ -452,4 +485,25 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginTop: 10,
   },
+  containerItem: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomColor: 'black',
+    borderBottomWidth: 1,
+    paddingBottom: 6,
+    paddingTop: 5,
+  },
+  darkContainerItem: {
+    borderBottomColor: '#eee',
+
+  }
+  ,
+  inputD: {
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: '#dcdde1',
+    color: 'black',
+    fontSize: 15
+  }
 })
