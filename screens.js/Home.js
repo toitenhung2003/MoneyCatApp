@@ -1,14 +1,16 @@
 import { Alert, Image, StyleSheet, Text, View } from 'react-native'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ChiScreen from './ChiScreen';
 import ThuScreen from './ThuScreen';
-
+import { ThemeContext } from '../contexts/ThemeContext';
 const Home = () => {
   const [activeTab, setActiveTab] = useState("TIỀN CHI");
   const [Category,setCategory] = useState()
   const [token2,setToken]=useState()
+    const { darkMode } = useContext(ThemeContext);
+  
   var data;
 
   const getCategoryData = async () => {
@@ -65,7 +67,7 @@ const Home = () => {
 
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: darkMode ? "#222" : 'white'}]}>
       {/* Tab Buttons */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
@@ -105,7 +107,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     alignItems: "center",
-    paddingTop: 40,
+    paddingTop: 20,
 
   },
   tabContainer: {

@@ -1,7 +1,8 @@
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { Calendar } from 'react-native-calendars';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ThemeContext } from '../contexts/ThemeContext';
 
 
 
@@ -9,6 +10,7 @@ const Chat = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [Category, setCategory] = useState()
   const [token2, setToken] = useState()
+    const { darkMode } = useContext(ThemeContext);
 
   const getCategoryData = async () => {
     const storedData = await AsyncStorage.getItem('userData');
@@ -100,7 +102,7 @@ const Chat = () => {
     // Kiểm tra xem Category?.result?.result có phải là mảng không
     if (Array.isArray(Category?.result?.result)) {
       Category.result.result.forEach(item => {
-        if (item.type == 1)  totalExpense+= item.totalIncome;
+        if (item.type == 1) totalExpense += item.totalIncome;
         if (item.type == 0) totalIncome += item.totalExpense;
       });
     } else {
@@ -121,7 +123,7 @@ const Chat = () => {
 
   // console.log("totalIncome", totalIncome);
 
-  const handleDeleteItem = async(id)=>{
+  const handleDeleteItem = async (id) => {
     Alert.alert(
       "Xác nhận xóa", // Tiêu đề
       "Bạn có chắc chắn muốn xóa mục này?", // Nội dung
@@ -132,15 +134,15 @@ const Chat = () => {
       { cancelable: true } // Cho phép đóng alert khi nhấn ngoài
     );
 
-    
+
 
 
 
   }
 
-  const deleteItem = async (id)=>{
-    
-    
+  const deleteItem = async (id) => {
+
+
     try {
       const response = await fetch('https://test-spending-management.glitch.me/transactions', {
         method: 'DELETE',
@@ -154,11 +156,11 @@ const Chat = () => {
       });
 
       data = await response.json();
-      
-      if (data?.result?.errorCode==0) {
+
+      if (data?.result?.errorCode == 0) {
         console.log("Xóa thành công ");
         getCategoryData()
-        
+
       }
 
 
@@ -168,20 +170,35 @@ const Chat = () => {
 
     }
   }
+  const calendarTheme = {
+    backgroundColor: darkMode ? '#222' : 'white',
+    calendarBackground: darkMode ? '#222' : 'white',
+    textSectionTitleColor: darkMode ? '#ccc' : '#000',  // Màu chữ tiêu đề tuần
+    dayTextColor: darkMode ? '#fff' : '#000',          // Màu chữ ngày thường
+    todayTextColor: '#1E90FF',                         // Màu hôm nay
+    selectedDayTextColor: darkMode ? '#000' : '#fff',  // Màu chữ ngày được chọn
+    selectedDayBackgroundColor: darkMode ? '#ccc' : '#000',  // Nền ngày được chọn
+    monthTextColor: darkMode ? '#fff' : '#000',        // Màu chữ tháng/năm
+    arrowColor: darkMode ? '#fff' : '#000',            // Màu mũi tên
+    disabledArrowColor: darkMode ? '#666' : '#ccc',
+    textDisabledColor: darkMode ? '#555' : '#d9e1e8',  // Màu chữ ngày không có sẵn
+    dotColor: 'red',                                   // Màu chấm trên ngày có sự kiện
+    selectedDotColor: 'red',
+  };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: darkMode ? '#222' : 'white'}]}>
       <Text style={styles.title}>Lịch</Text>
       <Calendar
         theme={{
-          backgroundColor: "#ffffff",
-          calendarBackground: "#ffffff",
-          textSectionTitleColor: "#000",
-          dayTextColor: "#000",
-          todayTextColor: "#1E90FF",
-          selectedDayTextColor: "#000",
-          monthTextColor: "#000",
-          arrowColor: "#000",
+          backgroundColor: '#ffffff',
+          calendarBackground: '#ffffff',
+          textSectionTitleColor: '#b6c1cd',
+          selectedDayBackgroundColor: '#00adf5',
+          selectedDayTextColor: '#ffffff',
+          todayTextColor: '#00adf5',
+          dayTextColor: '#2d4150',
+          textDisabledColor: '#dd99ee'
         }}
         onDayPress={(day) => setSelectedDate(day.dateString)}
 
@@ -196,25 +213,25 @@ const Chat = () => {
 
       <View style={styles.summaryContainer}>
         <View style={styles.summaryItem}>
-          <Text style={styles.incomeText}>Thu nhập</Text>
+          <Text style={[styles.incomeText, darkMode ? styles.darkText : styles.incomeText]}>Thu nhập</Text>
           <Text style={styles.incomeAmount}>{totalIncome.toLocaleString()}đ</Text>
         </View>
         <View style={styles.summaryItem}>
-          <Text style={styles.expenseText}>Chi tiêu</Text>
-          <Text style={styles.expenseAmount}>{totalExpense.toLocaleString()}đ</Text>
+          <Text style={[styles.expenseText, darkMode ? styles.darkText: styles.expenseText]}>Chi tiêu</Text>
+          <Text style={styles.expenseAmount}>-{totalExpense.toLocaleString()}đ</Text>
         </View>
         <View style={styles.summaryItem}>
-          <Text style={styles.totalText}>Tổng</Text>
+          <Text style={[styles.totalText, darkMode ? styles.darkText : styles.totalText]}>Tổng</Text>
           <Text style={styles.totalAmount}>{balance.toLocaleString()}đ</Text>
         </View>
       </View>
 
       {/* Hiển thị chi tiết giao dịch khi chọn ngày */}
       {selectedDate && (
-        <View style={styles.transactionContainer}>
-          <Text style={styles.selectedDate}>{selectedDate} ({new Date(selectedDate).toLocaleDateString("vi-VN", { weekday: "long" })})</Text>
+        <View style={[styles.transactionContainer, {backgroundColor: darkMode ? '#333' : 'white'}]}>
+          <Text style={[styles.selectedDate, {color: darkMode ? 'white' : 'black'}]}>{selectedDate} ({new Date(selectedDate).toLocaleDateString("vi-VN", { weekday: "long" })})</Text>
 
-          <ScrollView contentContainerStyle={styles.scrollView}>
+          <ScrollView contentContainerStyle={[styles.scrollView, {backgroundColor: darkMode ? '#444' : 'white'}]}>
             {totalIncome == 0 && totalExpense == 0 ? (
               <Text style={styles.noTransaction}>Không có giao dịch</Text>
             ) : (
@@ -222,18 +239,21 @@ const Chat = () => {
               Category?.result?.result
                 .filter(item => (item.totalExpense ?? 0) !== 0 || (item.totalIncome ?? 0) !== 0) // Lọc danh mục có giao dịch
                 ?.map((item, index) => (
-                  <View key={index} style={styles.transactionItem}>
+                  <View key={index} style={[styles.transactionItem, {borderBottomColor: darkMode ? 'white' : '#222'}]}>
                     {/* Hiển thị danh mục */}
-                    <Text style={styles.transactionCategory}>{item?.category || "Không xác định"}</Text>
+                    <Text style={[styles.transactionCategory, {color: darkMode ? 'white' : 'black'}]}>{item?.category || "Không xác định"}</Text>
 
                     {Array.isArray(item.transactions) && item.transactions.length > 0 ? (
                       item?.transactions?.map((transaction, tIndex) => (
-                
-                        <TouchableOpacity onLongPress={()=>handleDeleteItem(transaction._id)} key={`${index}-${tIndex}`} style={styles.transactionDetail}>
-                          <Text style={styles.transactionDesc}>
+
+                        <TouchableOpacity onPress={() => handleDeleteItem(transaction._id)} key={`${index}-${tIndex}`} style={styles.transactionDetail}>
+                          <Text style={[styles.transactionDesc, {color: darkMode ? '#f0f0f0' : '#000'}]}>
                             {transaction?.description || "Không có mô tả"}
                           </Text>
-                          <Text style={styles.transactionAmount}>
+                          <Text style={[
+                            styles.transactionAmount,
+                            transaction?.type === 0 && { color: '#1E90FF' }, {fontSize:18} // xanh nước biển nếu là thu
+                          ]}>
                             {transaction?.type === 1 ? "-" : "+"}
                             {(transaction?.amount ?? 0).toLocaleString()}đ
                           </Text>
@@ -258,7 +278,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#ffffff",
-    paddingTop: 40,
     paddingHorizontal: 10,
   },
   title: {
@@ -281,12 +300,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
   },
-  incomeText: { color: "#1E90FF", fontSize: 16, fontWeight: "bold" },
-  incomeAmount: { color: "#1E90FF", fontSize: 18 },
-  expenseText: { color: "#FF4500", fontSize: 16, fontWeight: "bold" },
-  expenseAmount: { color: "#FF4500", fontSize: 18 },
-  totalText: { color: "#27ae60", fontSize: 16, fontWeight: "bold" },
-  totalAmount: { color: "#27ae60", fontSize: 18 },
+  darkText:{
+    color:'white'
+  }
+  ,
+  incomeText: { color: "black", fontSize: 15, fontWeight: "bold" },
+  incomeAmount: { color: "#1E90FF", fontSize: 18 , fontWeight:'bold'},
+  expenseText: { color: "black", fontSize: 15, fontWeight: "bold" },
+  expenseAmount: { color: "#FF4500", fontSize: 18, fontWeight:'bold' },
+  totalText: { color: "black", fontSize: 15, fontWeight: "bold" },
+  totalAmount: { color: "#27ae60", fontSize: 18, fontWeight:'bold' },
 
   // style cho phần hiển thị giao dịch
   transactionContainer: {
@@ -309,9 +332,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: "#222",
   },
-  transactionCategory: { color: "#EE8E20", fontWeight: "bold", width: '20%', marginBottom: 10 },
+  transactionCategory: { color: "black", fontWeight: "bold", width: '50%', marginBottom: 10, fontSize:16 },
   transactionDesc: { color: "#000", flex: 1, paddingLeft: 10 },
-  transactionAmount: { color: "#FF4500", fontWeight: "bold" },
+  transactionAmount: { color: "#FF4500", fontWeight: "bold", fontSize:20 },
   noTransaction: {
     color: "#999", textAlign: "center", marginTop: 10
 
@@ -323,20 +346,20 @@ const styles = StyleSheet.create({
   },
   transactionDetail: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    backgroundColor: "#f9f9f9", // Màu nền nhẹ để phân biệt
-    borderRadius: 8,
-    marginBottom: 5,
-    borderWidth: 1,
-    borderColor: "#ddd", // Viền nhẹ
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2, // Hiệu ứng nổi trên Android
+    // justifyContent: "space-between",
+    // alignItems: "center",
+    // paddingVertical: 8,
+    // paddingHorizontal: 10,
+    // backgroundColor: "#f9f9f9", // Màu nền nhẹ để phân biệt
+    // borderRadius: 8,
+    // marginBottom: 5,
+    // borderWidth: 1,
+    // borderColor: "#ddd", // Viền nhẹ
+    // shadowColor: "#000",
+    // shadowOffset: { width: 0, height: 1 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 3,
+    // elevation: 2, // Hiệu ứng nổi trên Android
 
   },
   transactionDesc: {
